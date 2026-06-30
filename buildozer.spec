@@ -8,7 +8,7 @@ source.exclude_dirs = tests,bin,.buildozer,.git,__pycache__,convert2md.egg-info,
 source.exclude_patterns = gui.py,make_logo.py,buildozer.spec
 version = 1.0.0
 
-requirements = python3,kivy,flask,jinja2,werkzeug,click,itsdangerous,markupsafe,html2text,openpyxl,pymupdf,pymupdf4llm,pillow
+requirements = python3,kivy,flask,jinja2,werkzeug,click,itsdangerous,markupsafe,html2text,openpyxl,pymupdf,pymupdf4llm,pillow,mammoth
 
 orientation = portrait
 fullscreen = 0

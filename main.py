@@ -155,7 +155,7 @@ class Convert2MDApp(App):
         root_path = '/storage/emulated/0' if platform == 'android' else str(Path.home())
         fc = FileChooserListView(
             path=root_path,
-            filters=['*.pdf', '*.xlsx', '*.html', '*.htm', '*.csv'],
+            filters=['*.pdf', '*.docx', '*.xlsx', '*.html', '*.htm', '*.csv'],
         )
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(fc)
