@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6366F1">
+  <title>Convert2MD</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8562089196502599"
+          crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg:      #F0F4FF;
+      --card:    #FFFFFF;
+      --primary: #6366F1;
+      --prim2:   #818CF8;
+      --success: #10B981;
+      --error:   #EF4444;
+      --text:    #1E293B;
+      --muted:   #64748B;
+      --border:  #E2E8F0;
+      --drop-bg: #EEF2FF;
+      --ad-h:    90px;
+    }
+    @media (max-width: 600px) { :root { --ad-h: 60px; } }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: calc(var(--ad-h) + 16px);
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    header {
+      background: linear-gradient(90deg, var(--primary), var(--prim2));
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px #6366f130;
+    }
+    header .logo-emoji { font-size: 28px; line-height: 1; }
+    header h1 { color: #fff; font-size: 20px; font-weight: 700; }
+    header .tagline {
+      color: rgba(255,255,255,.75);
+      font-size: 12px;
+      margin-left: auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (max-width: 480px) { header .tagline { display: none; } }
+
+    /* ── Main content ────────────────────────────── */
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px 16px;
+    }
+
+    /* ── Drop zone ───────────────────────────────── */
+    #drop-zone {
+      background: var(--drop-bg);
+      border: 2.5px dashed var(--primary);
+      border-radius: 20px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      user-select: none;
+    }
+    #drop-zone.hover { background: #DDE8FF; }
+    #drop-zone .icon { font-size: 56px; line-height: 1; margin-bottom: 12px; }
+    #drop-zone h2 { font-size: 20px; color: var(--text); margin-bottom: 6px; }
+    #drop-zone p  { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-pdf  { background:#EF444420; color:#EF4444; border:1.5px solid #EF444455; }
+    .badge-docx { background:#2563EB20; color:#2563EB; border:1.5px solid #2563EB55; }
+    .badge-xlsx { background:#16A34A20; color:#16A34A; border:1.5px solid #16A34A55; }
+    .badge-pptx { background:#EA580C20; color:#EA580C; border:1.5px solid #EA580C55; }
+    .badge-html { background:#D9770620; color:#D97706; border:1.5px solid #D9770655; }
+    .badge-csv  { background:#7C3AED20; color:#7C3AED; border:1.5px solid #7C3AED55; }
+
+    #file-input { display: none; }
+
+    .btn-pick {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 10px 28px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-pick:hover { opacity: .88; }
+
+    /* ── File list ───────────────────────────────── */
+    #file-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+
+    .file-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px #00000010;
+    }
+    .file-card .ext-badge {
+      flex-shrink: 0;
+      width: 52px;
+      height: 30px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .file-card .info { flex: 1; min-width: 0; }
+    .file-card .fname {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-card .status { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .file-card .status.ok  { color: var(--success); }
+    .file-card .status.err { color: var(--error); }
+
+    .bar-wrap {
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--prim2));
+      width: 0%;
+      transition: width .3s;
+    }
+    .bar.done { background: var(--success); }
+    .bar.err  { background: var(--error); }
+
+    .btn-dl {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      background: var(--success);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: none;
+    }
+
+    /* ── Action row ──────────────────────────────── */
+    #action-row {
+      display: none;
+      justify-content: flex-end;
+      margin-top: 20px;
+      gap: 12px;
+    }
+    #btn-convert {
+      padding: 14px 40px;
+      background: linear-gradient(90deg, var(--primary), var(--prim2));
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    #btn-convert:hover  { opacity: .88; }
+    #btn-convert:disabled { background: var(--border); color: var(--muted); cursor: default; opacity: 1; }
+
+    #btn-more {
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: auto;
+    }
+    #btn-more:hover { background: var(--drop-bg); }
+
+    /* ── Footer ──────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 12px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── AdSense banner (fixed bottom) ───────────── */
+    #ad-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--ad-h);
+      background: #fff;
+      box-shadow: 0 -2px 10px rgba(0,0,0,.10);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #ad-bar ins {
+      display: block !important;
+      width: 100%;
+      max-width: 970px;
+      height: var(--ad-h);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span class="logo-emoji">📄</span>
+    <h1>Convert2MD</h1>
+    <span class="tagline">PDF · DOCX · XLSX · PPTX · HTML · CSV → Markdown</span>
+  </header>
+
+  <main>
+    <div id="drop-zone">
+      <div class="icon">📂</div>
+      <h2>Arraste arquivos aqui</h2>
+      <p>ou toque para selecionar</p>
+      <div class="badges">
+        <span class="badge badge-pdf">PDF</span>
+        <span class="badge badge-docx">DOCX</span>
+        <span class="badge badge-xlsx">XLSX</span>
+        <span class="badge badge-pptx">PPTX</span>
+        <span class="badge badge-html">HTML</span>
+        <span class="badge badge-csv">CSV</span>
+      </div>
+      <label class="btn-pick" for="file-input">Escolher arquivos</label>
+    </div>
+
+    <input type="file" id="file-input" multiple
+           accept=".pdf,.docx,.xlsx,.pptx,.html,.htm,.csv">
+
+    <div id="file-list"></div>
+
+    <div id="action-row">
+      <button id="btn-more">+ Adicionar mais</button>
+      <button id="btn-convert">Converter para Markdown</button>
+    </div>
+
+    <footer>Convert2MD &nbsp;•&nbsp; Funciona offline &nbsp;•&nbsp; Código aberto</footer>
+  </main>
+
+  <!-- AdSense: vídeo/display banner fixo no rodapé — desktop (728×90) e mobile (320×50→60px) -->
+  <div id="ad-bar">
+    <ins class="adsbygoogle"
+         data-ad-client="ca-pub-8562089196502599"
+         data-ad-slot="5140656536"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+
+  <script>
+    const EXT_COLORS = {
+      pdf:  ['#EF444420','#EF4444','#EF444455'],
+      docx: ['#2563EB20','#2563EB','#2563EB55'],
+      xlsx: ['#16A34A20','#16A34A','#16A34A55'],
+      pptx: ['#EA580C20','#EA580C','#EA580C55'],
+      html: ['#D9770620','#D97706','#D9770655'],
+      htm:  ['#D9770620','#D97706','#D9770655'],
+      csv:  ['#7C3AED20','#7C3AED','#7C3AED55'],
+    };
+
+    const dropZone   = document.getElementById('drop-zone');
+    const fileInput  = document.getElementById('file-input');
+    const fileList   = document.getElementById('file-list');
+    const actionRow  = document.getElementById('action-row');
+    const btnConvert = document.getElementById('btn-convert');
+    const btnMore    = document.getElementById('btn-more');
+
+    const queue = new Map(); // key → {file, card, bar, status, dlBtn, done}
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('hover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('hover');
+      addFiles([...e.dataTransfer.files]);
+    });
+    dropZone.addEventListener('click', e => {
+      if (e.target.tagName !== 'LABEL') fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => { addFiles([...fileInput.files]); fileInput.value = ''; });
+    btnMore.addEventListener('click', () => fileInput.click());
+    btnConvert.addEventListener('click', convertAll);
+
+    function extOf(name) { return name.split('.').pop().toLowerCase(); }
+
+    function addFiles(files) {
+      const supported = new Set(['pdf','docx','xlsx','pptx','html','htm','csv']);
+      let added = false;
+      for (const f of files) {
+        const key = f.name + '_' + f.size;
+        if (queue.has(key)) continue;
+        if (!supported.has(extOf(f.name))) continue;
+        const entry = buildCard(f);
+        queue.set(key, { file: f, ...entry, done: false });
+        added = true;
+      }
+      if (added) {
+        dropZone.style.display = 'none';
+        actionRow.style.display = 'flex';
+        btnConvert.disabled = false;
+        btnConvert.textContent = 'Converter para Markdown';
+      }
+    }
+
+    function buildCard(file) {
+      const ext = extOf(file.name);
+      const [bg, fg, border] = EXT_COLORS[ext] || ['#64748B20','#64748B','#64748B55'];
+
+      const card = document.createElement('div');
+      card.className = 'file-card';
+
+      const badge = document.createElement('div');
+      badge.className = 'ext-badge';
+      badge.textContent = ext.toUpperCase();
+      badge.style.cssText = `background:${bg};color:${fg};border:1.5px solid ${border};`;
+
+      const info = document.createElement('div');
+      info.className = 'info';
+      const fname = document.createElement('div');
+      fname.className = 'fname';
+      fname.textContent = file.name;
+      const status = document.createElement('div');
+      status.className = 'status';
+      status.textContent = 'Aguardando…';
+      const barWrap = document.createElement('div');
+      barWrap.className = 'bar-wrap';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      barWrap.appendChild(bar);
+      info.append(fname, status, barWrap);
+
+      const dlBtn = document.createElement('a');
+      dlBtn.className = 'btn-dl';
+      dlBtn.textContent = 'Baixar .md';
+
+      card.append(badge, info, dlBtn);
+      fileList.appendChild(card);
+
+      return { card, bar, status, dlBtn };
+    }
+
+    async function convertAll() {
+      btnConvert.disabled = true;
+      btnConvert.textContent = 'Convertendo…';
+
+      const pending = [...queue.values()].filter(e => !e.done);
+
+      for (const entry of pending) {
+        const { file, bar, status, dlBtn } = entry;
+        status.textContent = 'Enviando…';
+        status.className = 'status';
+        bar.style.width = '30%';
+
+        const fd = new FormData();
+        fd.append('file', file);
+
+        try {
+          const resp = await fetch('/convert', { method: 'POST', body: fd });
+          bar.style.width = '80%';
+
+          if (!resp.ok) {
+            const j = await resp.json().catch(() => ({ error: resp.statusText }));
+            throw new Error(j.error || resp.statusText);
+          }
+
+          const blob = await resp.blob();
+          const url  = URL.createObjectURL(blob);
+          const stem = file.name.replace(/\.[^.]+$/, '');
+
+          bar.style.width = '100%';
+          bar.classList.add('done');
+          status.textContent = '✓  ' + stem + '.md';
+          status.className = 'status ok';
+          dlBtn.href = url;
+          dlBtn.download = stem + '.md';
+          dlBtn.style.display = 'inline-block';
+          entry.done = true;
+
+        } catch (err) {
+          bar.style.width = '100%';
+          bar.classList.add('err');
+          status.textContent = '✗  ' + err.message;
+          status.className = 'status err';
+        }
+      }
+
+      const allDone = [...queue.values()].every(e => e.done);
+      btnConvert.textContent = allDone ? '✓  Tudo convertido!' : 'Converter para Markdown';
+      if (!allDone) btnConvert.disabled = false;
+    }
+  </script>
+</body>
+</html>

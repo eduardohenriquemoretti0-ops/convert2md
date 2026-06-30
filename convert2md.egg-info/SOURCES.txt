@@ -1,0 +1,8 @@
+convert2md.py
+pyproject.toml
+convert2md.egg-info/PKG-INFO
+convert2md.egg-info/SOURCES.txt
+convert2md.egg-info/dependency_links.txt
+convert2md.egg-info/entry_points.txt
+convert2md.egg-info/requires.txt
+convert2md.egg-info/top_level.txt
