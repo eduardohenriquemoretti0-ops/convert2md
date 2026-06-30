@@ -1,2 +1,0 @@
-[console_scripts]
-convert2md = convert2md:main

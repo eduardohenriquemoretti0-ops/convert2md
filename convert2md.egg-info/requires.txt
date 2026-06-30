@@ -1,6 +1,0 @@
-pymupdf4llm
-mammoth
-html2text
-openpyxl
-python-pptx
-watchdog
