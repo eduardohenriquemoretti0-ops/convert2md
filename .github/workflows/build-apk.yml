@@ -41,6 +41,8 @@ jobs:
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
           PIP_BREAK_SYSTEM_PACKAGES: "1"
+          PKG_CONFIG_LIBDIR: ""
+          PKG_CONFIG_SYSROOT_DIR: ""
         run: buildozer android debug
 
       - name: Upload APK

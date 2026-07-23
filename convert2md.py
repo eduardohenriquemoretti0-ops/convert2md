@@ -29,19 +29,53 @@ def _clean(text: str) -> str:
 
 
 def convert_pdf(path: Path) -> str:
-    import pymupdf4llm
-    return pymupdf4llm.to_markdown(str(path))
+    try:
+        # Primary: pymupdf4llm (web, better layout awareness)
+        import pymupdf4llm
+        return pymupdf4llm.to_markdown(str(path))
+    except ImportError:
+        # Fallback: pypdf (Android, pure Python, no native compilation)
+        import pypdf
+        pdf = pypdf.PdfReader(str(path))
+        parts = []
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                parts.append(text)
+        return "\n\n".join(parts)
 
 
 def convert_docx(path: Path) -> str:
-    import mammoth
-    import html2text as h2t
-    with open(path, "rb") as f:
-        result = mammoth.convert_to_html(f)
-    h = h2t.HTML2Text()
-    h.ignore_images = True
-    h.body_width = 0
-    return h.handle(result.value)
+    try:
+        # Primary: mammoth (web, full HTML→MD conversion)
+        import mammoth
+        import html2text as h2t
+        with open(path, "rb") as f:
+            result = mammoth.convert_to_html(f)
+        h = h2t.HTML2Text()
+        h.ignore_images = True
+        h.body_width = 0
+        return h.handle(result.value)
+    except ImportError:
+        # Fallback: extract text from DOCX XML (pure Python, no lxml)
+        import zipfile
+        import xml.etree.ElementTree as ET
+        parts = []
+        try:
+            with zipfile.ZipFile(path) as z:
+                xml = z.read('word/document.xml')
+                root = ET.fromstring(xml)
+                ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+                for para in root.findall('.//w:p', ns):
+                    text_parts = []
+                    for t in para.findall('.//w:t', ns):
+                        if t.text:
+                            text_parts.append(t.text)
+                    if text_parts:
+                        parts.append(''.join(text_parts))
+        except Exception:
+            pass
+        return '\n'.join(parts) if parts else ""
 
 
 def convert_xlsx(path: Path) -> str:
@@ -67,26 +101,53 @@ def convert_xlsx(path: Path) -> str:
 
 
 def convert_pptx(path: Path) -> str:
-    from pptx import Presentation
-    prs = Presentation(str(path))
-    parts = []
-    for i, slide in enumerate(prs.slides, 1):
-        title, body = "", []
-        for shape in slide.shapes:
-            if not shape.has_text_frame:
-                continue
-            text = shape.text_frame.text.strip()
-            if not text:
-                continue
-            ph = getattr(shape, "placeholder_format", None)
-            if ph is not None and ph.idx == 0:
-                title = text
-            else:
-                body.append(text)
-        parts.append(f"## Slide {i}{': ' + title if title else ''}")
-        parts.extend(body)
-        parts.append("")
-    return "\n".join(parts)
+    try:
+        # Primary: python-pptx (web, structured extraction)
+        from pptx import Presentation
+        prs = Presentation(str(path))
+        parts = []
+        for i, slide in enumerate(prs.slides, 1):
+            title, body = "", []
+            for shape in slide.shapes:
+                if not shape.has_text_frame:
+                    continue
+                text = shape.text_frame.text.strip()
+                if not text:
+                    continue
+                ph = getattr(shape, "placeholder_format", None)
+                if ph is not None and ph.idx == 0:
+                    title = text
+                else:
+                    body.append(text)
+            parts.append(f"## Slide {i}{': ' + title if title else ''}")
+            parts.extend(body)
+            parts.append("")
+        return "\n".join(parts)
+    except ImportError:
+        # Fallback: extract text from PPTX XML (pure Python, no native deps)
+        import zipfile
+        import xml.etree.ElementTree as ET
+        parts = []
+        try:
+            with zipfile.ZipFile(path) as z:
+                slide_num = 1
+                for name in sorted(z.namelist()):
+                    if name.startswith('ppt/slides/slide') and name.endswith('.xml'):
+                        xml = z.read(name)
+                        root = ET.fromstring(xml)
+                        ns = {'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'}
+                        texts = []
+                        for t in root.findall('.//a:t', ns):
+                            if t.text:
+                                texts.append(t.text)
+                        if texts:
+                            parts.append(f"## Slide {slide_num}")
+                            parts.extend(texts)
+                            parts.append("")
+                        slide_num += 1
+        except Exception:
+            pass
+        return '\n'.join(parts) if parts else ""
 
 
 def convert_html(path: Path) -> str:
